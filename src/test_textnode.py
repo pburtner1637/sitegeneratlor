@@ -2,6 +2,7 @@ import unittest
 from textnode import TextNode, TextType
 from htmlnode import HTMLNode
 
+
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
         """

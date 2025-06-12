@@ -1,13 +1,4 @@
 class HTMLNode:
-    """
-    Represents a node in an HTML tree structure.
-
-    Attributes:
-        tag (str, optional): The HTML tag name (e.g., "p", "a", "h1"). Defaults to None.
-        value (str, optional): The text content of the HTML tag. Defaults to None.
-        children (list, optional): A list of HTMLNode objects representing child nodes. Defaults to None.
-        props (dict, optional): A dictionary of key-value pairs representing HTML attributes. Defaults to None.
-    """
     def __init__(self, tag=None, value=None, children=None, props=None):
         self.tag = tag
         self.value = value
@@ -15,34 +6,48 @@ class HTMLNode:
         self.props = props
 
     def to_html(self):
-        """
-        Raises a NotImplementedError. This method should be overridden by child classes
-        to render the node as an HTML string.
-        """
         raise NotImplementedError("to_html method not implemented")
 
     def props_to_html(self):
-        """
-        Converts the 'props' dictionary into an HTML attribute string.
-
-        Returns:
-            str: A string representing the HTML attributes (e.g., ' href="url" target="_blank"').
-                 Returns an empty string if self.props is None or empty.
-        """
         if self.props is None:
             return ""
-        
-        html_attributes = []
-        for key, value in self.props.items():
-            html_attributes.append(f'{key}="{value}"')
-        
-        # Join with a space and add a leading space if there are attributes
-        return " " + " ".join(html_attributes) if html_attributes else ""
+        props_html = ""
+        for prop in self.props:
+            props_html += f' {prop}="{self.props[prop]}"'
+        return props_html
 
     def __repr__(self):
-        """
-        Returns a string representation of the HTMLNode object for debugging.
-        Format: HTMLNode(tag, value, children, props)
-        """
-        return f"HTMLNode(tag={self.tag!r}, value={self.value!r}, children={self.children!r}, props={self.props!r})"
+        return f"HTMLNode({self.tag}, {self.value}, children: {self.children}, {self.props})"
 
+
+class LeafNode(HTMLNode):
+    def __init__(self, tag, value, props=None):
+        super().__init__(tag, value, None, props)
+
+    def to_html(self):
+        if self.value is None:
+            raise ValueError("invalid HTML: no value")
+        if self.tag is None:
+            return self.value
+        return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
+
+    def __repr__(self):
+        return f"LeafNode({self.tag}, {self.value}, {self.props})"
+
+
+class ParentNode(HTMLNode):
+    def __init__(self, tag, children, props=None):
+        super().__init__(tag, None, children, props)
+
+    def to_html(self):
+        if self.tag is None:
+            raise ValueError("invalid HTML: no tag")
+        if self.children is None:
+            raise ValueError("invalid HTML: no children")
+        children_html = ""
+        for child in self.children:
+            children_html += child.to_html()
+        return f"<{self.tag}{self.props_to_html()}>{children_html}</{self.tag}>"
+
+    def __repr__(self):
+        return f"ParentNode({self.tag}, children: {self.children}, {self.props})"
